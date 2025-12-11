@@ -26,8 +26,19 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Room Schema
+const roomSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true },
+    description: { type: String, default: '' },
+    creator: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Room = mongoose.model('Room', roomSchema);
+
 // Message Schema
 const messageSchema = new mongoose.Schema({
+    roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
     username: { type: String, required: true },
     message: { type: String, required: true },
     timestamp: { type: Date, default: Date.now }
@@ -39,12 +50,29 @@ const Message = mongoose.model('Message', messageSchema);
 app.use(express.static('public'));
 app.use(express.json());
 
+// Create default "General" room if it doesn't exist
+async function createDefaultRoom() {
+    try {
+        const generalRoom = await Room.findOne({ name: 'General' });
+        if (!generalRoom) {
+            await Room.create({
+                name: 'General',
+                description: 'General discussion',
+                creator: 'system'
+            });
+            console.log('Created default General room');
+        }
+    } catch (err) {
+        console.error('Error creating default room:', err);
+    }
+}
+createDefaultRoom();
+
 // Auth Routes
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Validation
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password required' });
         }
@@ -57,20 +85,17 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
         }
 
-        // Check if user exists
         const existingUser = await User.findOne({ username: username.toLowerCase() });
         if (existingUser) {
             return res.status(400).json({ error: 'Username already taken' });
         }
 
-        // Hash password and create user
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
             username: username.toLowerCase(),
             password: hashedPassword
         });
 
-        // Generate token
         const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
 
         res.status(201).json({ token, username: user.username });
@@ -84,19 +109,16 @@ app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Find user
         const user = await User.findOne({ username: username.toLowerCase() });
         if (!user) {
             return res.status(400).json({ error: 'Invalid username or password' });
         }
 
-        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ error: 'Invalid username or password' });
         }
 
-        // Generate token
         const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
 
         res.json({ token, username: user.username });
@@ -106,7 +128,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Verify token endpoint
 app.get('/api/verify', (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
@@ -121,7 +142,18 @@ app.get('/api/verify', (req, res) => {
     }
 });
 
-// Store connected users: { socketId: username }
+// Room Routes
+app.get('/api/rooms', async (req, res) => {
+    try {
+        const rooms = await Room.find().sort({ createdAt: 1 });
+        res.json(rooms);
+    } catch (err) {
+        console.error('Error fetching rooms:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Store connected users per room: { odosUsSocketId: { username, currentRoom } }
 const users = {};
 
 // Socket.io with authentication
@@ -140,52 +172,117 @@ io.use((socket, next) => {
     }
 });
 
+// Get users in a specific room
+function getUsersInRoom(roomId) {
+    return Object.values(users)
+        .filter(u => u.currentRoom === roomId)
+        .map(u => u.username);
+}
+
 // Handle socket connections
 io.on('connection', async (socket) => {
     const username = socket.username;
-    users[socket.id] = username;
+    users[socket.id] = { username, currentRoom: null };
     console.log(`${username} connected`);
 
-    // Send last 50 messages to the new user
-    try {
-        const messages = await Message.find()
-            .sort({ timestamp: -1 })
-            .limit(50)
-            .lean();
+    // Join a room
+    socket.on('join room', async (roomId) => {
+        const previousRoom = users[socket.id].currentRoom;
+        
+        // Leave previous room if any
+        if (previousRoom) {
+            socket.leave(previousRoom);
+            io.to(previousRoom).emit('user left room', {
+                username,
+                users: getUsersInRoom(previousRoom)
+            });
+        }
 
-        socket.emit('message history', messages.reverse().map(msg => ({
-            username: msg.username,
-            message: msg.message,
-            timestamp: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        })));
-    } catch (err) {
-        console.error('Error fetching messages:', err);
-    }
+        // Join new room
+        socket.join(roomId);
+        users[socket.id].currentRoom = roomId;
 
-    // Notify everyone that a new user joined
-    io.emit('user joined', {
-        username: username,
-        users: Object.values(users)
+        // Send message history for this room
+        try {
+            const messages = await Message.find({ roomId })
+                .sort({ timestamp: -1 })
+                .limit(50)
+                .lean();
+
+            socket.emit('message history', messages.reverse().map(msg => ({
+                username: msg.username,
+                message: msg.message,
+                timestamp: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            })));
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+        }
+
+        // Notify room that user joined
+        io.to(roomId).emit('user joined room', {
+            username,
+            users: getUsersInRoom(roomId)
+        });
+    });
+
+    // Create a new room
+    socket.on('create room', async (data, callback) => {
+        try {
+            const { name, description } = data;
+            
+            if (!name || name.trim().length === 0) {
+                return callback({ error: 'Room name is required' });
+            }
+
+            const existingRoom = await Room.findOne({ name: name.trim() });
+            if (existingRoom) {
+                return callback({ error: 'Room name already exists' });
+            }
+
+            const room = await Room.create({
+                name: name.trim(),
+                description: description || '',
+                creator: username
+            });
+
+            // Notify all connected clients about new room
+            io.emit('room created', room);
+            callback({ success: true, room });
+        } catch (err) {
+            console.error('Error creating room:', err);
+            callback({ error: 'Failed to create room' });
+        }
     });
 
     // Handle disconnection
     socket.on('disconnect', () => {
+        const currentRoom = users[socket.id]?.currentRoom;
+        
+        if (currentRoom) {
+            io.to(currentRoom).emit('user left room', {
+                username,
+                users: getUsersInRoom(currentRoom).filter(u => u !== username)
+            });
+        }
+
         delete users[socket.id];
         console.log(`${username} disconnected`);
-
-        io.emit('user left', {
-            username: username,
-            users: Object.values(users)
-        });
     });
 
     // Handle incoming chat messages
     socket.on('chat message', async (msg) => {
+        const currentRoom = users[socket.id]?.currentRoom;
+        
+        if (!currentRoom) {
+            return;
+        }
+
         const timestamp = new Date();
 
         // Save message to database
         try {
             await Message.create({
+                roomId: currentRoom,
                 username: username,
                 message: msg,
                 timestamp: timestamp
@@ -194,8 +291,8 @@ io.on('connection', async (socket) => {
             console.error('Error saving message:', err);
         }
 
-        // Broadcast message
-        io.emit('chat message', {
+        // Broadcast message to room only
+        io.to(currentRoom).emit('chat message', {
             username: username,
             message: msg,
             timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

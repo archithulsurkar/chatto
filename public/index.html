@@ -108,24 +108,94 @@
         #chat-layout {
             display: flex;
             height: 100%;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            gap: 20px;
+            gap: 15px;
         }
 
-        /* Sidebar - Online Users */
-        #sidebar {
-            width: 200px;
+        /* Rooms Sidebar */
+        #rooms-sidebar {
+            width: 220px;
             background: #16213e;
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
         }
 
-        #sidebar h3 {
+        #rooms-sidebar h3 {
+            color: #e94560;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #rooms-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        #rooms-list li {
+            color: #aaa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+
+        #rooms-list li:hover {
+            background: #0f3460;
+            color: #eee;
+        }
+
+        #rooms-list li.active {
+            background: #e94560;
+            color: white;
+        }
+
+        #rooms-list li .room-name {
+            font-weight: 500;
+        }
+
+        #rooms-list li .room-desc {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+
+        #create-room-btn {
+            margin-top: 10px;
+            padding: 12px;
+            background: transparent;
+            border: 1px dashed #e94560;
+            color: #e94560;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #create-room-btn:hover {
+            background: #e9456022;
+        }
+
+        /* Users Sidebar */
+        #users-sidebar {
+            width: 180px;
+            background: #16213e;
+            border-radius: 10px;
+            padding: 15px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #users-sidebar h3 {
             color: #e94560;
             margin-bottom: 15px;
             font-size: 14px;
@@ -174,19 +244,31 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
 
         #chat-header {
             color: #eee;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #16213e;
+            padding: 15px 20px;
+            background: #16213e;
+            border-radius: 10px;
             margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        #chat-header span {
+        #chat-header .room-info h2 {
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+
+        #chat-header .room-info span {
+            color: #888;
+            font-size: 13px;
+        }
+
+        #chat-header .user-info {
             color: #888;
             font-size: 14px;
         }
@@ -245,13 +327,21 @@
             text-align: right;
         }
 
-        /* System Messages */
         .system-message {
             text-align: center;
             color: #666;
             font-size: 13px;
             padding: 10px;
             font-style: italic;
+        }
+
+        #no-room-selected {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 16px;
         }
 
         /* Message Form */
@@ -289,10 +379,116 @@
             background: #c73e54;
         }
 
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+            width: 350px;
+        }
+
+        .modal h3 {
+            color: #eee;
+            margin-bottom: 20px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            background: #0f3460;
+            color: #eee;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .modal input:focus {
+            outline: 2px solid #e94560;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-buttons .cancel-btn {
+            background: transparent;
+            border: 1px solid #666;
+            color: #888;
+        }
+
+        .modal-buttons .cancel-btn:hover {
+            border-color: #888;
+            color: #eee;
+        }
+
+        .modal-buttons .create-btn {
+            background: #e94560;
+            color: white;
+        }
+
+        .modal-buttons .create-btn:hover {
+            background: #c73e54;
+        }
+
+        .modal-error {
+            color: #e94560;
+            font-size: 13px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
         /* Responsive */
-        @media (max-width: 768px) {
-            #sidebar {
+        @media (max-width: 900px) {
+            #users-sidebar {
                 display: none;
+            }
+        }
+
+        @media (max-width: 700px) {
+            #rooms-sidebar {
+                width: 60px;
+                padding: 10px;
+            }
+            
+            #rooms-sidebar h3,
+            #rooms-list li .room-desc,
+            #create-room-btn {
+                display: none;
+            }
+
+            #rooms-list li {
+                padding: 10px;
+                text-align: center;
+            }
+
+            #rooms-list li .room-name {
+                font-size: 12px;
             }
         }
     </style>
@@ -305,14 +501,12 @@
         
         <div id="error-message" class="error-message"></div>
 
-        <!-- Login Form -->
         <form id="login-form" class="auth-form">
             <input type="text" id="login-username" placeholder="Username" required />
             <input type="password" id="login-password" placeholder="Password" required />
             <button type="submit">Login</button>
         </form>
 
-        <!-- Register Form -->
         <form id="register-form" class="auth-form" style="display: none;">
             <input type="text" id="register-username" placeholder="Username" minlength="3" maxlength="20" required />
             <input type="password" id="register-password" placeholder="Password" minlength="6" required />
@@ -329,24 +523,52 @@
     <!-- Chat Screen -->
     <div id="chat-screen">
         <div id="chat-layout">
-            <!-- Sidebar -->
-            <div id="sidebar">
-                <h3>Online (<span id="user-count">0</span>)</h3>
-                <ul id="online-users"></ul>
-                <button id="logout-btn">Logout</button>
+            <!-- Rooms Sidebar -->
+            <div id="rooms-sidebar">
+                <h3>Rooms</h3>
+                <ul id="rooms-list"></ul>
+                <button id="create-room-btn">+ New Room</button>
             </div>
 
             <!-- Main Chat -->
             <div id="chat-main">
                 <div id="chat-header">
-                    <h2>💬 Chatto</h2>
-                    <span>Logged in as <strong id="display-username"></strong></span>
+                    <div class="room-info">
+                        <h2 id="current-room-name">Select a room</h2>
+                        <span id="current-room-desc"></span>
+                    </div>
+                    <div class="user-info">
+                        Logged in as <strong id="display-username"></strong>
+                    </div>
                 </div>
-                <ul id="messages"></ul>
-                <form id="form">
+                <ul id="messages">
+                    <div id="no-room-selected">← Select a room to start chatting</div>
+                </ul>
+                <form id="form" style="display: none;">
                     <input id="input" autocomplete="off" placeholder="Type a message..." />
                     <button type="submit">Send</button>
                 </form>
+            </div>
+
+            <!-- Users Sidebar -->
+            <div id="users-sidebar">
+                <h3>Online (<span id="user-count">0</span>)</h3>
+                <ul id="online-users"></ul>
+                <button id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="create-room-modal" class="modal-overlay">
+        <div class="modal">
+            <h3>Create New Room</h3>
+            <div id="modal-error" class="modal-error"></div>
+            <input type="text" id="new-room-name" placeholder="Room name" maxlength="30" />
+            <input type="text" id="new-room-desc" placeholder="Description (optional)" maxlength="100" />
+            <div class="modal-buttons">
+                <button class="cancel-btn" id="cancel-create-room">Cancel</button>
+                <button class="create-btn" id="confirm-create-room">Create</button>
             </div>
         </div>
     </div>
@@ -355,6 +577,8 @@
     <script>
         let socket;
         let currentUsername = '';
+        let currentRoomId = null;
+        let rooms = [];
 
         // DOM Elements
         const authScreen = document.getElementById('auth-screen');
@@ -372,6 +596,17 @@
         const userCount = document.getElementById('user-count');
         const displayUsername = document.getElementById('display-username');
         const logoutBtn = document.getElementById('logout-btn');
+        const roomsList = document.getElementById('rooms-list');
+        const currentRoomName = document.getElementById('current-room-name');
+        const currentRoomDesc = document.getElementById('current-room-desc');
+        const noRoomSelected = document.getElementById('no-room-selected');
+        const createRoomBtn = document.getElementById('create-room-btn');
+        const createRoomModal = document.getElementById('create-room-modal');
+        const newRoomName = document.getElementById('new-room-name');
+        const newRoomDesc = document.getElementById('new-room-desc');
+        const cancelCreateRoom = document.getElementById('cancel-create-room');
+        const confirmCreateRoom = document.getElementById('confirm-create-room');
+        const modalError = document.getElementById('modal-error');
 
         // Check for existing token on page load
         window.addEventListener('load', async () => {
@@ -470,11 +705,63 @@
             }
         });
 
+        // Fetch and render rooms
+        async function loadRooms() {
+            try {
+                const res = await fetch('/api/rooms');
+                rooms = await res.json();
+                renderRooms();
+            } catch (err) {
+                console.error('Error loading rooms:', err);
+            }
+        }
+
+        function renderRooms() {
+            roomsList.innerHTML = '';
+            rooms.forEach(room => {
+                const li = document.createElement('li');
+                li.dataset.roomId = room._id;
+                if (room._id === currentRoomId) {
+                    li.classList.add('active');
+                }
+                li.innerHTML = `
+                    <div class="room-name"># ${escapeHtml(room.name)}</div>
+                    ${room.description ? `<div class="room-desc">${escapeHtml(room.description)}</div>` : ''}
+                `;
+                li.addEventListener('click', () => joinRoom(room));
+                roomsList.appendChild(li);
+            });
+        }
+
+        function joinRoom(room) {
+            if (currentRoomId === room._id) return;
+
+            currentRoomId = room._id;
+            currentRoomName.textContent = '# ' + room.name;
+            currentRoomDesc.textContent = room.description || '';
+            
+            // Update active state in room list
+            document.querySelectorAll('#rooms-list li').forEach(li => {
+                li.classList.toggle('active', li.dataset.roomId === room._id);
+            });
+
+            // Clear messages and show form
+            messages.innerHTML = '';
+            noRoomSelected.style.display = 'none';
+            form.style.display = 'flex';
+
+            // Tell server we're joining this room
+            socket.emit('join room', room._id);
+            input.focus();
+        }
+
         // Connect to chat with token
         function connectToChat(token) {
             authScreen.style.display = 'none';
             chatScreen.style.display = 'block';
             displayUsername.textContent = currentUsername;
+
+            loadRooms();
 
             socket = io({ auth: { token } });
 
@@ -516,28 +803,72 @@
                 messages.scrollTop = messages.scrollHeight;
             });
 
-            // User joined
-            socket.on('user joined', (data) => {
-                addSystemMessage(`${data.username} joined the chat`);
+            // User joined room
+            socket.on('user joined room', (data) => {
+                addSystemMessage(`${data.username} joined the room`);
                 updateUserList(data.users);
             });
 
-            // User left
-            socket.on('user left', (data) => {
-                addSystemMessage(`${data.username} left the chat`);
+            // User left room
+            socket.on('user left room', (data) => {
+                addSystemMessage(`${data.username} left the room`);
                 updateUserList(data.users);
             });
 
-            input.focus();
+            // New room created
+            socket.on('room created', (room) => {
+                rooms.push(room);
+                renderRooms();
+            });
         }
 
         // Send message
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (input.value.trim() && socket) {
+            if (input.value.trim() && socket && currentRoomId) {
                 socket.emit('chat message', input.value);
                 input.value = '';
             }
+        });
+
+        // Create room modal
+        createRoomBtn.addEventListener('click', () => {
+            createRoomModal.style.display = 'flex';
+            newRoomName.value = '';
+            newRoomDesc.value = '';
+            modalError.style.display = 'none';
+            newRoomName.focus();
+        });
+
+        cancelCreateRoom.addEventListener('click', () => {
+            createRoomModal.style.display = 'none';
+        });
+
+        createRoomModal.addEventListener('click', (e) => {
+            if (e.target === createRoomModal) {
+                createRoomModal.style.display = 'none';
+            }
+        });
+
+        confirmCreateRoom.addEventListener('click', () => {
+            const name = newRoomName.value.trim();
+            const description = newRoomDesc.value.trim();
+
+            if (!name) {
+                modalError.textContent = 'Room name is required';
+                modalError.style.display = 'block';
+                return;
+            }
+
+            socket.emit('create room', { name, description }, (response) => {
+                if (response.error) {
+                    modalError.textContent = response.error;
+                    modalError.style.display = 'block';
+                } else {
+                    createRoomModal.style.display = 'none';
+                    joinRoom(response.room);
+                }
+            });
         });
 
         // Logout
@@ -549,7 +880,10 @@
                 socket.disconnect();
             }
             currentUsername = '';
-            messages.innerHTML = '';
+            currentRoomId = null;
+            rooms = [];
+            messages.innerHTML = '<div id="no-room-selected">← Select a room to start chatting</div>';
+            form.style.display = 'none';
             chatScreen.style.display = 'none';
             authScreen.style.display = 'block';
             loginForm.reset();
