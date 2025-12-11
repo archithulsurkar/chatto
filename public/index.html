@@ -327,6 +327,23 @@
             messages.scrollTop = messages.scrollHeight;
         });
 
+        // Load message history
+        socket.on('message history', (history) => {
+            history.forEach(data => {
+                const li = document.createElement('li');
+                li.className = 'message' + (data.username === currentUsername ? ' own' : '');
+                li.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-username">${escapeHtml(data.username)}</span>
+                        <span class="message-time">${data.timestamp}</span>
+                    </div>
+                    <div class="message-text">${escapeHtml(data.message)}</div>
+                `;
+                messages.appendChild(li);
+            });
+            messages.scrollTop = messages.scrollHeight;
+        });
+
         // User joined
         socket.on('user joined', (data) => {
             addSystemMessage(`${data.username} joined the chat`);
