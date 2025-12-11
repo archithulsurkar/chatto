@@ -16,23 +16,121 @@
             background: #1a1a2e;
             height: 100vh;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
-        #chat-container {
+        /* Login Screen */
+        #login-screen {
+            background: #16213e;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #login-screen h1 {
+            color: #eee;
+            margin-bottom: 10px;
+        }
+
+        #login-screen p {
+            color: #888;
+            margin-bottom: 25px;
+        }
+
+        #login-screen input {
+            padding: 15px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #0f3460;
+            color: #eee;
+            width: 250px;
+            margin-bottom: 15px;
+        }
+
+        #login-screen input:focus {
+            outline: 2px solid #e94560;
+        }
+
+        #login-screen button {
+            padding: 15px 40px;
+            font-size: 16px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #login-screen button:hover {
+            background: #c73e54;
+        }
+
+        /* Chat Screen */
+        #chat-screen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #chat-layout {
+            display: flex;
+            height: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Sidebar - Online Users */
+        #sidebar {
+            width: 200px;
+            background: #16213e;
+            border-radius: 10px;
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        #sidebar h3 {
+            color: #e94560;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #online-users {
+            list-style: none;
+        }
+
+        #online-users li {
+            color: #eee;
+            padding: 8px 0;
+            border-bottom: 1px solid #0f3460;
+            font-size: 14px;
+        }
+
+        #online-users li::before {
+            content: '●';
+            color: #4ade80;
+            margin-right: 8px;
+        }
+
+        /* Main Chat Area */
+        #chat-main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px;
         }
 
-        h1 {
+        #chat-header {
             color: #eee;
-            text-align: center;
-            padding: 20px 0;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #16213e;
+            margin-bottom: 15px;
         }
 
         #messages {
@@ -41,19 +139,64 @@
             background: #16213e;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             list-style: none;
         }
 
-        #messages li {
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            background: #0f3460;
-            border-radius: 8px;
+        .message {
+            margin-bottom: 15px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .message-username {
+            color: #e94560;
+            font-weight: 600;
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .message-text {
             color: #eee;
+            background: #0f3460;
+            padding: 10px 15px;
+            border-radius: 0 10px 10px 10px;
+            display: inline-block;
+            max-width: 80%;
             word-wrap: break-word;
         }
 
+        .message.own .message-header {
+            justify-content: flex-end;
+        }
+
+        .message.own .message-text {
+            background: #e94560;
+            border-radius: 10px 0 10px 10px;
+        }
+
+        .message.own {
+            text-align: right;
+        }
+
+        /* System Messages */
+        .system-message {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            padding: 10px;
+            font-style: italic;
+        }
+
+        /* Message Form */
         #form {
             display: flex;
             gap: 10px;
@@ -87,26 +230,80 @@
         #form button:hover {
             background: #c73e54;
         }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="chat-container">
+    <!-- Login Screen -->
+    <div id="login-screen">
         <h1>💬 Chatto</h1>
-        <ul id="messages"></ul>
-        <form id="form">
-            <input id="input" autocomplete="off" placeholder="Type a message..." />
-            <button type="submit">Send</button>
+        <p>Enter your username to join the chat</p>
+        <form id="login-form">
+            <input type="text" id="username-input" placeholder="Username" maxlength="20" required />
+            <br>
+            <button type="submit">Join Chat</button>
         </form>
+    </div>
+
+    <!-- Chat Screen -->
+    <div id="chat-screen">
+        <div id="chat-layout">
+            <!-- Sidebar -->
+            <div id="sidebar">
+                <h3>Online (<span id="user-count">0</span>)</h3>
+                <ul id="online-users"></ul>
+            </div>
+
+            <!-- Main Chat -->
+            <div id="chat-main">
+                <div id="chat-header">
+                    <h2>💬 Chatto</h2>
+                </div>
+                <ul id="messages"></ul>
+                <form id="form">
+                    <input id="input" autocomplete="off" placeholder="Type a message..." />
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        let currentUsername = '';
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username-input');
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
+        const onlineUsers = document.getElementById('online-users');
+        const userCount = document.getElementById('user-count');
 
-        // Send message when form is submitted
+        // Handle login
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = usernameInput.value.trim();
+            if (username) {
+                currentUsername = username;
+                socket.emit('user join', username);
+                loginScreen.style.display = 'none';
+                chatScreen.style.display = 'block';
+                input.focus();
+            }
+        });
+
+        // Send message
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (input.value.trim()) {
@@ -115,14 +312,59 @@
             }
         });
 
-        // Display received messages
-        socket.on('chat message', (msg) => {
+        // Receive chat message
+        socket.on('chat message', (data) => {
             const li = document.createElement('li');
-            li.textContent = msg;
+            li.className = 'message' + (data.username === currentUsername ? ' own' : '');
+            li.innerHTML = `
+                <div class="message-header">
+                    <span class="message-username">${escapeHtml(data.username)}</span>
+                    <span class="message-time">${data.timestamp}</span>
+                </div>
+                <div class="message-text">${escapeHtml(data.message)}</div>
+            `;
             messages.appendChild(li);
-            // Auto-scroll to bottom
             messages.scrollTop = messages.scrollHeight;
         });
+
+        // User joined
+        socket.on('user joined', (data) => {
+            addSystemMessage(`${data.username} joined the chat`);
+            updateUserList(data.users);
+        });
+
+        // User left
+        socket.on('user left', (data) => {
+            addSystemMessage(`${data.username} left the chat`);
+            updateUserList(data.users);
+        });
+
+        // Helper: Add system message
+        function addSystemMessage(text) {
+            const li = document.createElement('li');
+            li.className = 'system-message';
+            li.textContent = text;
+            messages.appendChild(li);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Helper: Update online users list
+        function updateUserList(users) {
+            onlineUsers.innerHTML = '';
+            userCount.textContent = users.length;
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user;
+                onlineUsers.appendChild(li);
+            });
+        }
+
+        // Helper: Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>
