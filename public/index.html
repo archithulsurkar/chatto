@@ -20,41 +20,42 @@
             align-items: center;
         }
 
-        /* Login Screen */
-        #login-screen {
+        /* Auth Screen */
+        #auth-screen {
             background: #16213e;
             padding: 40px;
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 320px;
         }
 
-        #login-screen h1 {
+        #auth-screen h1 {
             color: #eee;
             margin-bottom: 10px;
         }
 
-        #login-screen p {
+        #auth-screen p {
             color: #888;
             margin-bottom: 25px;
         }
 
-        #login-screen input {
+        .auth-form input {
             padding: 15px 20px;
             font-size: 16px;
             border: none;
             border-radius: 8px;
             background: #0f3460;
             color: #eee;
-            width: 250px;
-            margin-bottom: 15px;
+            width: 100%;
+            margin-bottom: 12px;
         }
 
-        #login-screen input:focus {
+        .auth-form input:focus {
             outline: 2px solid #e94560;
         }
 
-        #login-screen button {
+        .auth-form button {
             padding: 15px 40px;
             font-size: 16px;
             background: #e94560;
@@ -63,10 +64,38 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.3s;
+            width: 100%;
+            margin-top: 5px;
         }
 
-        #login-screen button:hover {
+        .auth-form button:hover {
             background: #c73e54;
+        }
+
+        .auth-toggle {
+            color: #888;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .auth-toggle a {
+            color: #e94560;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #e9456033;
+            color: #e94560;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
         }
 
         /* Chat Screen */
@@ -92,6 +121,8 @@
             border-radius: 10px;
             padding: 20px;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         #sidebar h3 {
@@ -104,6 +135,8 @@
 
         #online-users {
             list-style: none;
+            flex: 1;
+            overflow-y: auto;
         }
 
         #online-users li {
@@ -119,6 +152,23 @@
             margin-right: 8px;
         }
 
+        #logout-btn {
+            margin-top: 15px;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid #e94560;
+            color: #e94560;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #logout-btn:hover {
+            background: #e94560;
+            color: white;
+        }
+
         /* Main Chat Area */
         #chat-main {
             flex: 1;
@@ -131,6 +181,14 @@
             padding-bottom: 15px;
             border-bottom: 1px solid #16213e;
             margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #chat-header span {
+            color: #888;
+            font-size: 14px;
         }
 
         #messages {
@@ -240,15 +298,32 @@
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="login-screen">
+    <!-- Auth Screen -->
+    <div id="auth-screen">
         <h1>💬 Chatto</h1>
-        <p>Enter your username to join the chat</p>
-        <form id="login-form">
-            <input type="text" id="username-input" placeholder="Username" maxlength="20" required />
-            <br>
-            <button type="submit">Join Chat</button>
+        <p id="auth-subtitle">Login to join the chat</p>
+        
+        <div id="error-message" class="error-message"></div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form">
+            <input type="text" id="login-username" placeholder="Username" required />
+            <input type="password" id="login-password" placeholder="Password" required />
+            <button type="submit">Login</button>
         </form>
+
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form" style="display: none;">
+            <input type="text" id="register-username" placeholder="Username" minlength="3" maxlength="20" required />
+            <input type="password" id="register-password" placeholder="Password" minlength="6" required />
+            <input type="password" id="register-confirm" placeholder="Confirm Password" required />
+            <button type="submit">Create Account</button>
+        </form>
+
+        <p class="auth-toggle">
+            <span id="toggle-text">Don't have an account?</span>
+            <a id="toggle-auth">Sign up</a>
+        </p>
     </div>
 
     <!-- Chat Screen -->
@@ -258,12 +333,14 @@
             <div id="sidebar">
                 <h3>Online (<span id="user-count">0</span>)</h3>
                 <ul id="online-users"></ul>
+                <button id="logout-btn">Logout</button>
             </div>
 
             <!-- Main Chat -->
             <div id="chat-main">
                 <div id="chat-header">
                     <h2>💬 Chatto</h2>
+                    <span>Logged in as <strong id="display-username"></strong></span>
                 </div>
                 <ul id="messages"></ul>
                 <form id="form">
@@ -276,60 +353,156 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        let socket;
         let currentUsername = '';
 
         // DOM Elements
-        const loginScreen = document.getElementById('login-screen');
+        const authScreen = document.getElementById('auth-screen');
         const chatScreen = document.getElementById('chat-screen');
         const loginForm = document.getElementById('login-form');
-        const usernameInput = document.getElementById('username-input');
+        const registerForm = document.getElementById('register-form');
+        const toggleAuth = document.getElementById('toggle-auth');
+        const toggleText = document.getElementById('toggle-text');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const errorMessage = document.getElementById('error-message');
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
         const onlineUsers = document.getElementById('online-users');
         const userCount = document.getElementById('user-count');
+        const displayUsername = document.getElementById('display-username');
+        const logoutBtn = document.getElementById('logout-btn');
 
-        // Handle login
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = usernameInput.value.trim();
-            if (username) {
-                currentUsername = username;
-                socket.emit('user join', username);
-                loginScreen.style.display = 'none';
-                chatScreen.style.display = 'block';
-                input.focus();
+        // Check for existing token on page load
+        window.addEventListener('load', async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const res = await fetch('/api/verify', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        currentUsername = data.username;
+                        connectToChat(token);
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                } catch (err) {
+                    localStorage.removeItem('token');
+                }
             }
         });
 
-        // Send message
-        form.addEventListener('submit', (e) => {
+        // Toggle between login and register
+        toggleAuth.addEventListener('click', () => {
+            if (loginForm.style.display !== 'none') {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                toggleText.textContent = 'Already have an account?';
+                toggleAuth.textContent = 'Login';
+                authSubtitle.textContent = 'Create an account to get started';
+            } else {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                toggleText.textContent = "Don't have an account?";
+                toggleAuth.textContent = 'Sign up';
+                authSubtitle.textContent = 'Login to join the chat';
+            }
+            hideError();
+        });
+
+        // Login
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (input.value.trim()) {
-                socket.emit('chat message', input.value);
-                input.value = '';
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    currentUsername = data.username;
+                    connectToChat(data.token);
+                } else {
+                    showError(data.error);
+                }
+            } catch (err) {
+                showError('Connection error. Please try again.');
             }
         });
 
-        // Receive chat message
-        socket.on('chat message', (data) => {
-            const li = document.createElement('li');
-            li.className = 'message' + (data.username === currentUsername ? ' own' : '');
-            li.innerHTML = `
-                <div class="message-header">
-                    <span class="message-username">${escapeHtml(data.username)}</span>
-                    <span class="message-time">${data.timestamp}</span>
-                </div>
-                <div class="message-text">${escapeHtml(data.message)}</div>
-            `;
-            messages.appendChild(li);
-            messages.scrollTop = messages.scrollHeight;
+        // Register
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+
+            if (password !== confirm) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    currentUsername = data.username;
+                    connectToChat(data.token);
+                } else {
+                    showError(data.error);
+                }
+            } catch (err) {
+                showError('Connection error. Please try again.');
+            }
         });
 
-        // Load message history
-        socket.on('message history', (history) => {
-            history.forEach(data => {
+        // Connect to chat with token
+        function connectToChat(token) {
+            authScreen.style.display = 'none';
+            chatScreen.style.display = 'block';
+            displayUsername.textContent = currentUsername;
+
+            socket = io({ auth: { token } });
+
+            socket.on('connect_error', (err) => {
+                console.error('Connection error:', err.message);
+                logout();
+            });
+
+            // Load message history
+            socket.on('message history', (history) => {
+                messages.innerHTML = '';
+                history.forEach(data => {
+                    const li = document.createElement('li');
+                    li.className = 'message' + (data.username === currentUsername ? ' own' : '');
+                    li.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-username">${escapeHtml(data.username)}</span>
+                            <span class="message-time">${data.timestamp}</span>
+                        </div>
+                        <div class="message-text">${escapeHtml(data.message)}</div>
+                    `;
+                    messages.appendChild(li);
+                });
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            // Receive chat message
+            socket.on('chat message', (data) => {
                 const li = document.createElement('li');
                 li.className = 'message' + (data.username === currentUsername ? ' own' : '');
                 li.innerHTML = `
@@ -340,23 +513,59 @@
                     <div class="message-text">${escapeHtml(data.message)}</div>
                 `;
                 messages.appendChild(li);
+                messages.scrollTop = messages.scrollHeight;
             });
-            messages.scrollTop = messages.scrollHeight;
+
+            // User joined
+            socket.on('user joined', (data) => {
+                addSystemMessage(`${data.username} joined the chat`);
+                updateUserList(data.users);
+            });
+
+            // User left
+            socket.on('user left', (data) => {
+                addSystemMessage(`${data.username} left the chat`);
+                updateUserList(data.users);
+            });
+
+            input.focus();
+        }
+
+        // Send message
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value.trim() && socket) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
         });
 
-        // User joined
-        socket.on('user joined', (data) => {
-            addSystemMessage(`${data.username} joined the chat`);
-            updateUserList(data.users);
-        });
+        // Logout
+        logoutBtn.addEventListener('click', logout);
 
-        // User left
-        socket.on('user left', (data) => {
-            addSystemMessage(`${data.username} left the chat`);
-            updateUserList(data.users);
-        });
+        function logout() {
+            localStorage.removeItem('token');
+            if (socket) {
+                socket.disconnect();
+            }
+            currentUsername = '';
+            messages.innerHTML = '';
+            chatScreen.style.display = 'none';
+            authScreen.style.display = 'block';
+            loginForm.reset();
+            registerForm.reset();
+        }
 
-        // Helper: Add system message
+        // Helpers
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
         function addSystemMessage(text) {
             const li = document.createElement('li');
             li.className = 'system-message';
@@ -365,7 +574,6 @@
             messages.scrollTop = messages.scrollHeight;
         }
 
-        // Helper: Update online users list
         function updateUserList(users) {
             onlineUsers.innerHTML = '';
             userCount.textContent = users.length;
@@ -376,7 +584,6 @@
             });
         }
 
-        // Helper: Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
