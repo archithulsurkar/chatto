@@ -21,6 +21,10 @@ mongoose.connect(MONGODB_URI)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
     password: { type: String, required: true },
+    displayName: { type: String, default: '' },
+    bio: { type: String, default: '', maxlength: 150 },
+    avatarColor: { type: String, default: '#1976d2' },
+    status: { type: String, enum: ['online', 'away', 'busy', 'offline'], default: 'online' },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -49,6 +53,22 @@ const Message = mongoose.model('Message', messageSchema);
 // Middleware
 app.use(express.static('public'));
 app.use(express.json());
+
+// Auth middleware for API routes
+const authenticateToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        res.status(401).json({ error: 'Invalid token' });
+    }
+};
 
 // Create default "General" room if it doesn't exist
 async function createDefaultRoom() {
@@ -90,10 +110,16 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ error: 'Username already taken' });
         }
 
+        // Generate random avatar color
+        const colors = ['#1976d2', '#388e3c', '#d32f2f', '#7b1fa2', '#f57c00', '#0097a7', '#5d4037', '#455a64'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
             username: username.toLowerCase(),
-            password: hashedPassword
+            password: hashedPassword,
+            displayName: username,
+            avatarColor: randomColor
         });
 
         const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
@@ -142,6 +168,105 @@ app.get('/api/verify', (req, res) => {
     }
 });
 
+// Profile Routes
+app.get('/api/profile', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.user.username }).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(user);
+    } catch (err) {
+        console.error('Profile fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/profile', authenticateToken, async (req, res) => {
+    try {
+        const { displayName, bio, avatarColor, status } = req.body;
+        
+        const updates = {};
+        if (displayName !== undefined) updates.displayName = displayName.slice(0, 30);
+        if (bio !== undefined) updates.bio = bio.slice(0, 150);
+        if (avatarColor !== undefined) updates.avatarColor = avatarColor;
+        if (status !== undefined && ['online', 'away', 'busy', 'offline'].includes(status)) {
+            updates.status = status;
+        }
+
+        const user = await User.findOneAndUpdate(
+            { username: req.user.username },
+            updates,
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Notify all connected clients about profile update
+        io.emit('user profile updated', {
+            username: user.username,
+            displayName: user.displayName,
+            avatarColor: user.avatarColor,
+            status: user.status
+        });
+
+        res.json(user);
+    } catch (err) {
+        console.error('Profile update error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/profile/password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current and new password required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters' });
+        }
+
+        const user = await User.findOne({ username: req.user.username });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
+        console.error('Password update error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Get user profile by username (public info only)
+app.get('/api/users/:username', async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username.toLowerCase() })
+            .select('username displayName bio avatarColor status createdAt');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(user);
+    } catch (err) {
+        console.error('User fetch error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Room Routes
 app.get('/api/rooms', async (req, res) => {
     try {
@@ -153,11 +278,12 @@ app.get('/api/rooms', async (req, res) => {
     }
 });
 
-// Store connected users per room: { odosUsSocketId: { username, currentRoom } }
+// Store connected users per room with profile info
 const users = {};
+const userProfiles = {};
 
 // Socket.io with authentication
-io.use((socket, next) => {
+io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
         return next(new Error('Authentication required'));
@@ -166,23 +292,35 @@ io.use((socket, next) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         socket.username = decoded.username;
+        
+        // Fetch user profile
+        const user = await User.findOne({ username: decoded.username }).select('-password');
+        if (user) {
+            socket.userProfile = {
+                username: user.username,
+                displayName: user.displayName || user.username,
+                avatarColor: user.avatarColor,
+                status: user.status
+            };
+        }
         next();
     } catch (err) {
         next(new Error('Invalid token'));
     }
 });
 
-// Get users in a specific room
+// Get users in a specific room with profiles
 function getUsersInRoom(roomId) {
     return Object.values(users)
         .filter(u => u.currentRoom === roomId)
-        .map(u => u.username);
+        .map(u => userProfiles[u.username] || { username: u.username, avatarColor: '#1976d2' });
 }
 
 // Handle socket connections
 io.on('connection', async (socket) => {
     const username = socket.username;
     users[socket.id] = { username, currentRoom: null };
+    userProfiles[username] = socket.userProfile;
     console.log(`${username} connected`);
 
     // Join a room
@@ -209,8 +347,20 @@ io.on('connection', async (socket) => {
                 .limit(50)
                 .lean();
 
+            // Get user profiles for messages
+            const messageUsernames = [...new Set(messages.map(m => m.username))];
+            const messageUsers = await User.find({ username: { $in: messageUsernames } })
+                .select('username displayName avatarColor');
+            
+            const userMap = {};
+            messageUsers.forEach(u => {
+                userMap[u.username] = { displayName: u.displayName, avatarColor: u.avatarColor };
+            });
+
             socket.emit('message history', messages.reverse().map(msg => ({
                 username: msg.username,
+                displayName: userMap[msg.username]?.displayName || msg.username,
+                avatarColor: userMap[msg.username]?.avatarColor || '#1976d2',
                 message: msg.message,
                 timestamp: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             })));
@@ -261,11 +411,12 @@ io.on('connection', async (socket) => {
         if (currentRoom) {
             io.to(currentRoom).emit('user left room', {
                 username,
-                users: getUsersInRoom(currentRoom).filter(u => u !== username)
+                users: getUsersInRoom(currentRoom).filter(u => u.username !== username)
             });
         }
 
         delete users[socket.id];
+        // Don't delete userProfiles as other instances might need it
         console.log(`${username} disconnected`);
     });
 
@@ -278,6 +429,7 @@ io.on('connection', async (socket) => {
         }
 
         const timestamp = new Date();
+        const profile = userProfiles[username] || { displayName: username, avatarColor: '#1976d2' };
 
         // Save message to database
         try {
@@ -294,6 +446,8 @@ io.on('connection', async (socket) => {
         // Broadcast message to room only
         io.to(currentRoom).emit('chat message', {
             username: username,
+            displayName: profile.displayName,
+            avatarColor: profile.avatarColor,
             message: msg,
             timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });

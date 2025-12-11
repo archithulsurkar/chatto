@@ -120,6 +120,18 @@
             border-left: 4px solid #c62828;
         }
 
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+            text-align: left;
+            border-left: 4px solid #2e7d32;
+        }
+
         /* Chat Screen */
         #chat-screen {
             display: none;
@@ -285,12 +297,17 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #online-users li:hover {
+            background: #f5f5f5;
         }
 
         #online-users li .avatar {
             width: 32px;
             height: 32px;
-            background: #1976d2;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -299,6 +316,80 @@
             font-size: 14px;
             font-weight: 500;
             text-transform: uppercase;
+            position: relative;
+        }
+
+        #online-users li .avatar .status-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .status-online { background: #4caf50; }
+        .status-away { background: #ff9800; }
+        .status-busy { background: #f44336; }
+        .status-offline { background: #9e9e9e; }
+
+        /* Profile Card in Sidebar */
+        #profile-card {
+            padding: 16px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #profile-card:hover {
+            background: #f5f5f5;
+        }
+
+        #profile-card .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        #profile-card .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #profile-card .profile-name {
+            font-weight: 500;
+            font-size: 14px;
+            color: #333;
+        }
+
+        #profile-card .profile-status {
+            font-size: 12px;
+            color: #757575;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #profile-card .profile-status .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        #profile-card .settings-icon {
+            color: #757575;
+            font-size: 20px;
         }
 
         #logout-btn {
@@ -385,7 +476,6 @@
         .message .avatar {
             width: 36px;
             height: 36px;
-            background: #1976d2;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -451,10 +541,6 @@
             background: #1976d2;
             color: white;
             border-radius: 12px 0 12px 12px;
-        }
-
-        .message.own .avatar {
-            background: #7b1fa2;
         }
 
         .system-message {
@@ -545,7 +631,7 @@
             font-size: 22px;
         }
 
-        /* Modal */
+        /* Modal Base */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -564,6 +650,8 @@
             padding: 24px;
             border-radius: 8px;
             width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal h3 {
@@ -573,7 +661,7 @@
             font-size: 20px;
         }
 
-        .modal input {
+        .modal input, .modal textarea {
             width: 100%;
             padding: 14px 16px;
             border: 1px solid #e0e0e0;
@@ -586,7 +674,12 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        .modal input:focus {
+        .modal textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal input:focus, .modal textarea:focus {
             outline: none;
             border-color: #1976d2;
             box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
@@ -621,11 +714,13 @@
             background: #f5f5f5;
         }
 
+        .modal-buttons .save-btn,
         .modal-buttons .create-btn {
             background: #1976d2;
             color: white;
         }
 
+        .modal-buttons .save-btn:hover,
         .modal-buttons .create-btn:hover {
             background: #1565c0;
         }
@@ -638,6 +733,238 @@
             padding: 8px 12px;
             background: #ffebee;
             border-radius: 4px;
+        }
+
+        .modal-success {
+            color: #2e7d32;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            padding: 8px 12px;
+            background: #e8f5e9;
+            border-radius: 4px;
+        }
+
+        /* Profile Modal Specific */
+        .profile-modal {
+            width: 450px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .profile-header-info h4 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .profile-header-info p {
+            font-size: 14px;
+            color: #757575;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #757575;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            margin-bottom: 0;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: #333;
+        }
+
+        .status-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background: #fff;
+            color: #333;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            cursor: pointer;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: #1976d2;
+        }
+
+        .section-divider {
+            margin: 24px 0;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        /* Tabs */
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            margin: -24px -24px 24px;
+            padding: 0 24px;
+        }
+
+        .modal-tab {
+            padding: 16px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #757575;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .modal-tab:hover {
+            color: #333;
+        }
+
+        .modal-tab.active {
+            color: #1976d2;
+            border-bottom-color: #1976d2;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* User Profile Modal (viewing other users) */
+        .user-profile-modal {
+            width: 360px;
+        }
+
+        .user-profile-header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+
+        .user-profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin: 0 auto 16px;
+        }
+
+        .user-profile-name {
+            font-size: 22px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .user-profile-username {
+            font-size: 14px;
+            color: #757575;
+            margin-bottom: 12px;
+        }
+
+        .user-profile-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .user-profile-bio {
+            padding: 20px 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 20px;
+        }
+
+        .user-profile-bio h4 {
+            font-size: 12px;
+            font-weight: 500;
+            color: #757575;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .user-profile-bio p {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .user-profile-joined {
+            font-size: 12px;
+            color: #9e9e9e;
+            text-align: center;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
         }
 
         /* Responsive */
@@ -654,7 +981,9 @@
             
             .sidebar-header h3,
             #rooms-list li .room-info,
-            #create-room-btn span {
+            #create-room-btn span,
+            #profile-card .profile-info,
+            #profile-card .settings-icon {
                 display: none;
             }
 
@@ -665,6 +994,10 @@
 
             #create-room-btn {
                 padding: 12px;
+            }
+
+            #profile-card {
+                justify-content: center;
             }
         }
     </style>
@@ -709,6 +1042,17 @@
                     <span class="material-icons">add</span>
                     <span>New Channel</span>
                 </button>
+                <div id="profile-card">
+                    <div class="avatar" id="profile-avatar">U</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profile-display-name">Username</div>
+                        <div class="profile-status">
+                            <span class="status-dot status-online" id="profile-status-dot"></span>
+                            <span id="profile-status-text">Online</span>
+                        </div>
+                    </div>
+                    <span class="material-icons settings-icon">settings</span>
+                </div>
             </div>
 
             <!-- Main Chat -->
@@ -766,12 +1110,127 @@
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal profile-modal elevation-4">
+            <div class="modal-tabs">
+                <div class="modal-tab active" data-tab="profile">Profile</div>
+                <div class="modal-tab" data-tab="security">Security</div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content active" id="tab-profile">
+                <div class="profile-header">
+                    <div class="profile-avatar-large" id="modal-profile-avatar">U</div>
+                    <div class="profile-header-info">
+                        <h4 id="modal-profile-username">username</h4>
+                        <p>Member since <span id="modal-profile-joined">Jan 2024</span></p>
+                    </div>
+                </div>
+
+                <div id="profile-error" class="modal-error"></div>
+                <div id="profile-success" class="modal-success"></div>
+
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" id="edit-display-name" placeholder="Display Name" maxlength="30" />
+                </div>
+
+                <div class="form-group">
+                    <label>Bio</label>
+                    <textarea id="edit-bio" placeholder="Tell us about yourself..." maxlength="150"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Avatar Color</label>
+                    <div class="color-picker" id="color-picker">
+                        <div class="color-option" style="background: #1976d2" data-color="#1976d2"></div>
+                        <div class="color-option" style="background: #388e3c" data-color="#388e3c"></div>
+                        <div class="color-option" style="background: #d32f2f" data-color="#d32f2f"></div>
+                        <div class="color-option" style="background: #7b1fa2" data-color="#7b1fa2"></div>
+                        <div class="color-option" style="background: #f57c00" data-color="#f57c00"></div>
+                        <div class="color-option" style="background: #0097a7" data-color="#0097a7"></div>
+                        <div class="color-option" style="background: #5d4037" data-color="#5d4037"></div>
+                        <div class="color-option" style="background: #455a64" data-color="#455a64"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="status-select" id="edit-status">
+                        <option value="online">🟢 Online</option>
+                        <option value="away">🟡 Away</option>
+                        <option value="busy">🔴 Busy</option>
+                        <option value="offline">⚫ Invisible</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="cancel-btn" id="cancel-profile">Cancel</button>
+                    <button class="save-btn" id="save-profile">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div class="tab-content" id="tab-security">
+                <div id="security-error" class="modal-error"></div>
+                <div id="security-success" class="modal-success"></div>
+
+                <div class="section-title">Change Password</div>
+
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="current-password" placeholder="Enter current password" />
+                </div>
+
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="new-password" placeholder="Enter new password" minlength="6" />
+                </div>
+
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirm-new-password" placeholder="Confirm new password" />
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="cancel-btn" id="cancel-security">Cancel</button>
+                    <button class="save-btn" id="save-password">Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal (viewing other users) -->
+    <div id="user-profile-modal" class="modal-overlay">
+        <div class="modal user-profile-modal elevation-4">
+            <div class="user-profile-header">
+                <div class="user-profile-avatar" id="view-user-avatar">U</div>
+                <div class="user-profile-name" id="view-user-displayname">Display Name</div>
+                <div class="user-profile-username" id="view-user-username">@username</div>
+                <div class="user-profile-status">
+                    <span class="status-dot status-online" id="view-user-status-dot"></span>
+                    <span id="view-user-status-text">Online</span>
+                </div>
+            </div>
+            <div class="user-profile-bio" id="view-user-bio-section">
+                <h4>About</h4>
+                <p id="view-user-bio">No bio yet.</p>
+            </div>
+            <div class="user-profile-joined">
+                Joined <span id="view-user-joined">January 2024</span>
+            </div>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let socket;
         let currentUsername = '';
         let currentRoomId = null;
         let rooms = [];
+        let myProfile = {};
+        let selectedAvatarColor = '#1976d2';
 
         // DOM Elements
         const authScreen = document.getElementById('auth-screen');
@@ -801,6 +1260,17 @@
         const confirmCreateRoom = document.getElementById('confirm-create-room');
         const modalError = document.getElementById('modal-error');
 
+        // Profile elements
+        const profileCard = document.getElementById('profile-card');
+        const profileModal = document.getElementById('profile-modal');
+        const profileAvatar = document.getElementById('profile-avatar');
+        const profileDisplayName = document.getElementById('profile-display-name');
+        const profileStatusDot = document.getElementById('profile-status-dot');
+        const profileStatusText = document.getElementById('profile-status-text');
+
+        // User profile modal elements
+        const userProfileModal = document.getElementById('user-profile-modal');
+
         // Check for existing token on page load
         window.addEventListener('load', async () => {
             const token = localStorage.getItem('token');
@@ -812,6 +1282,7 @@
                     if (res.ok) {
                         const data = await res.json();
                         currentUsername = data.username;
+                        await loadProfile();
                         connectToChat(token);
                     } else {
                         localStorage.removeItem('token');
@@ -821,6 +1292,33 @@
                 }
             }
         });
+
+        // Load user profile
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    myProfile = await res.json();
+                    updateProfileUI();
+                }
+            } catch (err) {
+                console.error('Error loading profile:', err);
+            }
+        }
+
+        function updateProfileUI() {
+            const initial = (myProfile.displayName || myProfile.username || 'U').charAt(0).toUpperCase();
+            profileAvatar.textContent = initial;
+            profileAvatar.style.background = myProfile.avatarColor || '#1976d2';
+            profileDisplayName.textContent = myProfile.displayName || myProfile.username;
+            
+            profileStatusDot.className = 'status-dot status-' + (myProfile.status || 'online');
+            const statusLabels = { online: 'Online', away: 'Away', busy: 'Busy', offline: 'Invisible' };
+            profileStatusText.textContent = statusLabels[myProfile.status] || 'Online';
+        }
 
         // Toggle between login and register
         toggleAuth.addEventListener('click', () => {
@@ -857,6 +1355,7 @@
                 if (res.ok) {
                     localStorage.setItem('token', data.token);
                     currentUsername = data.username;
+                    await loadProfile();
                     connectToChat(data.token);
                 } else {
                     showError(data.error);
@@ -889,6 +1388,7 @@
                 if (res.ok) {
                     localStorage.setItem('token', data.token);
                     currentUsername = data.username;
+                    await loadProfile();
                     connectToChat(data.token);
                 } else {
                     showError(data.error);
@@ -936,17 +1436,14 @@
             currentRoomName.textContent = '# ' + room.name;
             currentRoomDesc.textContent = room.description || '';
             
-            // Update active state in room list
             document.querySelectorAll('#rooms-list li').forEach(li => {
                 li.classList.toggle('active', li.dataset.roomId === room._id);
             });
 
-            // Clear messages and show form
             messages.innerHTML = '';
             noRoomSelected.style.display = 'none';
             form.style.display = 'flex';
 
-            // Tell server we're joining this room
             socket.emit('join room', room._id);
             input.focus();
         }
@@ -966,7 +1463,6 @@
                 logout();
             });
 
-            // Load message history
             socket.on('message history', (history) => {
                 messages.innerHTML = '';
                 history.forEach(data => {
@@ -975,40 +1471,45 @@
                 messages.scrollTop = messages.scrollHeight;
             });
 
-            // Receive chat message
             socket.on('chat message', (data) => {
                 appendMessage(data);
                 messages.scrollTop = messages.scrollHeight;
             });
 
-            // User joined room
             socket.on('user joined room', (data) => {
                 addSystemMessage(`${data.username} joined the channel`);
                 updateUserList(data.users);
             });
 
-            // User left room
             socket.on('user left room', (data) => {
                 addSystemMessage(`${data.username} left the channel`);
                 updateUserList(data.users);
             });
 
-            // New room created
             socket.on('room created', (room) => {
                 rooms.push(room);
                 renderRooms();
+            });
+
+            socket.on('user profile updated', (data) => {
+                // Update user in online list if present
+                if (data.username === currentUsername) {
+                    myProfile = { ...myProfile, ...data };
+                    updateProfileUI();
+                }
             });
         }
 
         function appendMessage(data) {
             const li = document.createElement('li');
             li.className = 'message' + (data.username === currentUsername ? ' own' : '');
-            const initial = data.username.charAt(0).toUpperCase();
+            const initial = (data.displayName || data.username).charAt(0).toUpperCase();
+            const avatarColor = data.avatarColor || '#1976d2';
             li.innerHTML = `
-                <div class="avatar">${initial}</div>
+                <div class="avatar" style="background: ${avatarColor}">${initial}</div>
                 <div class="message-content">
                     <div class="message-header">
-                        <span class="message-username">${escapeHtml(data.username)}</span>
+                        <span class="message-username">${escapeHtml(data.displayName || data.username)}</span>
                         <span class="message-time">${data.timestamp}</span>
                     </div>
                     <div class="message-text">${escapeHtml(data.message)}</div>
@@ -1066,6 +1567,201 @@
             });
         });
 
+        // Profile Modal
+        profileCard.addEventListener('click', () => {
+            openProfileModal();
+        });
+
+        function openProfileModal() {
+            profileModal.style.display = 'flex';
+            
+            // Populate form with current values
+            document.getElementById('modal-profile-avatar').textContent = (myProfile.displayName || myProfile.username || 'U').charAt(0).toUpperCase();
+            document.getElementById('modal-profile-avatar').style.background = myProfile.avatarColor || '#1976d2';
+            document.getElementById('modal-profile-username').textContent = '@' + myProfile.username;
+            document.getElementById('modal-profile-joined').textContent = new Date(myProfile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            document.getElementById('edit-display-name').value = myProfile.displayName || '';
+            document.getElementById('edit-bio').value = myProfile.bio || '';
+            document.getElementById('edit-status').value = myProfile.status || 'online';
+            
+            selectedAvatarColor = myProfile.avatarColor || '#1976d2';
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.color === selectedAvatarColor);
+            });
+
+            // Reset messages
+            document.getElementById('profile-error').style.display = 'none';
+            document.getElementById('profile-success').style.display = 'none';
+            document.getElementById('security-error').style.display = 'none';
+            document.getElementById('security-success').style.display = 'none';
+            
+            // Reset password fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+        }
+
+        // Profile tabs
+        document.querySelectorAll('.modal-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Color picker
+        document.querySelectorAll('.color-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedAvatarColor = opt.dataset.color;
+                document.getElementById('modal-profile-avatar').style.background = selectedAvatarColor;
+            });
+        });
+
+        // Save profile
+        document.getElementById('save-profile').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            const profileError = document.getElementById('profile-error');
+            const profileSuccess = document.getElementById('profile-success');
+
+            try {
+                const res = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        displayName: document.getElementById('edit-display-name').value.trim(),
+                        bio: document.getElementById('edit-bio').value.trim(),
+                        avatarColor: selectedAvatarColor,
+                        status: document.getElementById('edit-status').value
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    myProfile = data;
+                    updateProfileUI();
+                    profileSuccess.textContent = 'Profile updated successfully!';
+                    profileSuccess.style.display = 'block';
+                    profileError.style.display = 'none';
+                    setTimeout(() => {
+                        profileModal.style.display = 'none';
+                    }, 1000);
+                } else {
+                    profileError.textContent = data.error;
+                    profileError.style.display = 'block';
+                    profileSuccess.style.display = 'none';
+                }
+            } catch (err) {
+                profileError.textContent = 'Connection error. Please try again.';
+                profileError.style.display = 'block';
+                profileSuccess.style.display = 'none';
+            }
+        });
+
+        // Save password
+        document.getElementById('save-password').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            const securityError = document.getElementById('security-error');
+            const securitySuccess = document.getElementById('security-success');
+            
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+
+            if (newPassword !== confirmPassword) {
+                securityError.textContent = 'New passwords do not match';
+                securityError.style.display = 'block';
+                securitySuccess.style.display = 'none';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/profile/password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    securitySuccess.textContent = 'Password updated successfully!';
+                    securitySuccess.style.display = 'block';
+                    securityError.style.display = 'none';
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-new-password').value = '';
+                } else {
+                    securityError.textContent = data.error;
+                    securityError.style.display = 'block';
+                    securitySuccess.style.display = 'none';
+                }
+            } catch (err) {
+                securityError.textContent = 'Connection error. Please try again.';
+                securityError.style.display = 'block';
+                securitySuccess.style.display = 'none';
+            }
+        });
+
+        // Cancel profile modal
+        document.getElementById('cancel-profile').addEventListener('click', () => {
+            profileModal.style.display = 'none';
+        });
+
+        document.getElementById('cancel-security').addEventListener('click', () => {
+            profileModal.style.display = 'none';
+        });
+
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) {
+                profileModal.style.display = 'none';
+            }
+        });
+
+        // View user profile
+        async function viewUserProfile(username) {
+            try {
+                const res = await fetch(`/api/users/${username}`);
+                if (res.ok) {
+                    const user = await res.json();
+                    
+                    const initial = (user.displayName || user.username).charAt(0).toUpperCase();
+                    document.getElementById('view-user-avatar').textContent = initial;
+                    document.getElementById('view-user-avatar').style.background = user.avatarColor || '#1976d2';
+                    document.getElementById('view-user-displayname').textContent = user.displayName || user.username;
+                    document.getElementById('view-user-username').textContent = '@' + user.username;
+                    
+                    const statusDot = document.getElementById('view-user-status-dot');
+                    statusDot.className = 'status-dot status-' + (user.status || 'online');
+                    const statusLabels = { online: 'Online', away: 'Away', busy: 'Busy', offline: 'Offline' };
+                    document.getElementById('view-user-status-text').textContent = statusLabels[user.status] || 'Online';
+                    
+                    document.getElementById('view-user-bio').textContent = user.bio || 'No bio yet.';
+                    document.getElementById('view-user-joined').textContent = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    
+                    userProfileModal.style.display = 'flex';
+                }
+            } catch (err) {
+                console.error('Error fetching user profile:', err);
+            }
+        }
+
+        userProfileModal.addEventListener('click', (e) => {
+            if (e.target === userProfileModal) {
+                userProfileModal.style.display = 'none';
+            }
+        });
+
         // Logout
         logoutBtn.addEventListener('click', logout);
 
@@ -1077,6 +1773,7 @@
             currentUsername = '';
             currentRoomId = null;
             rooms = [];
+            myProfile = {};
             messages.innerHTML = `<div id="no-room-selected">
                 <span class="material-icons">forum</span>
                 Select a channel to start chatting
@@ -1111,11 +1808,21 @@
             userCount.textContent = users.length;
             users.forEach(user => {
                 const li = document.createElement('li');
-                const initial = user.charAt(0).toUpperCase();
+                const initial = (user.displayName || user.username).charAt(0).toUpperCase();
+                const avatarColor = user.avatarColor || '#1976d2';
+                const status = user.status || 'online';
                 li.innerHTML = `
-                    <div class="avatar">${initial}</div>
-                    <span>${escapeHtml(user)}</span>
+                    <div class="avatar" style="background: ${avatarColor}">
+                        ${initial}
+                        <span class="status-dot status-${status}"></span>
+                    </div>
+                    <span>${escapeHtml(user.displayName || user.username)}</span>
                 `;
+                li.addEventListener('click', () => {
+                    if (user.username !== currentUsername) {
+                        viewUserProfile(user.username);
+                    }
+                });
                 onlineUsers.appendChild(li);
             });
         }
