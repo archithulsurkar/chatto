@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatto - Real-time Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #eee;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            background: #16213e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            list-style: none;
+        }
+
+        #messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: #0f3460;
+            border-radius: 8px;
+            color: #eee;
+            word-wrap: break-word;
+        }
+
+        #form {
+            display: flex;
+            gap: 10px;
+        }
+
+        #input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #16213e;
+            color: #eee;
+        }
+
+        #input:focus {
+            outline: 2px solid #e94560;
+        }
+
+        #form button {
+            padding: 15px 30px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #form button:hover {
+            background: #c73e54;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>💬 Chatto</h1>
+        <ul id="messages"></ul>
+        <form id="form">
+            <input id="input" autocomplete="off" placeholder="Type a message..." />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const messages = document.getElementById('messages');
+
+        // Send message when form is submitted
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value.trim()) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+
+        // Display received messages
+        socket.on('chat message', (msg) => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            messages.appendChild(li);
+            // Auto-scroll to bottom
+            messages.scrollTop = messages.scrollHeight;
+        });
+    </script>
+</body>
+</html>
