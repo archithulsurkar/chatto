@@ -1,3 +1,4 @@
+![Chatto](./assets/video.gif)
 # Chatto
 
 A lightweight, real‑time chat application with rooms, authentication, and persistent message history.
